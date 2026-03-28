@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Huevos de Pascua</title>
+<style>
+    /* ====== Reset & fondo transparente ====== */
+    html, body { 
+      height: 100%; 
+}
+    body {
+      margin: 0;
+      background: transparent; /* Fondo transparente */
+      overflow: hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* ====== Botón ====== */
+    #toggleBtn {
+      position: fixed; 
+      top: 12px; 
+      left: 12px; 
+      z-index: 1100;
+      appearance: none; 
+      border: none; 
+      background: #6c5ce7; 
+      color: white;
+      padding: 10px 14px; 
+      border-radius: 10px; 
+      font-weight: 700; 
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,.15);
+      transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
+    }
+    #toggleBtn:hover { background: #5a4ed2; }
+    #toggleBtn:active { transform: scale(.98); }
+
+    /* ====== Escenario (capa transparente a pantalla completa) ====== */
+    #stage {
+      position: fixed; 
+      inset: 0; 
+      pointer-events: none; 
+      z-index: 999;
+    }
+
+    /* ====== Paneles UI ====== */
+    .panel {
+      position: fixed; 
+      top: 60px; 
+      z-index: 1050;
+      background: rgba(255,255,255,.5);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: #111;
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.15);
+      padding: 12px 14px;
+      max-width: 360px;
+      user-select: none;
+    }
+
+    #countdownPanel { 
+      left: 12px; 
+      top: 40%;
+      display: none;
+}
+    #infoPanel      { 
+      right: 12px; 
+      top: 40%;
+      display: none;
+}
+
+    /* Reloj grande */
+    .countdown {
+      display: flex; 
+      align-items: center; 
+      gap: 12px;
+    }
+    .bubble {
+      width: 60px; 
+      height: 60px; 
+      border-radius: 50%;
+      background: #111; 
+      color: #fff; 
+      display: grid; 
+      place-items: center;
+      font-weight: 900; 
+      font-size: 22px;
+      box-shadow: inset 0 -6px 12px rgba(255,255,255,.18),
+                  inset 0 6px 14px rgba(0,0,0,.2);
+    }
+    .cd-text { font-weight: 800; font-size: 14px; color: #333; }
+    .cd-sub  { font-size: 12px; color: #555; margin-top: 4px; }
+
+    /* Info derecha */
+    .info-title { font-weight: 900; margin: 0 0 4px 0; }
+    .info-body  { font-size: 14px; color: #333; margin: 4px 0 0 0; }
+    .info-hint  { font-size: 12px; color: #555; margin-top: 8px; }
+
+    /* Progreso (0/3) */
+    #progressBadge {
+      margin-top: 10px;
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px;
+      background: #f1f5f9; 
+      color: #0f172a; 
+      border-radius: 999px;
+      padding: 6px 10px; 
+      font-weight: 800; 
+      font-size: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    }
+    #progressDot {
+      width: 10px; 
+      height: 10px; 
+      border-radius: 50%; 
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34,197,94,.6);
+    }
+
+    /* ====== Huevos ====== */
+    .egg {
+      position: absolute; 
+      top: -140px; 
+      pointer-events: auto; 
+      cursor: pointer;
+      animation: fall var(--dur, 8s) linear var(--delay, 0s) forwards;
+      will-change: transform;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
+    }
+    .egg .shell {
+      width: 100%; 
+      height: 100%;
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+      background: radial-gradient(120% 100% at 50% 0%,
+        rgba(255,255,255,.85) 0%,
+        rgba(255,255,255,.6) 8%,
+        var(--base, #ffdce0) 55%,
+        var(--shade, #ff9fb0) 100%
+      );
+      position: relative; 
+      overflow: hidden;
+    }
+
+    /* Detalles suaves para huevos NO dorados (visuales) */
+    .egg:not(.gold-look) .shell::after {
+      content: "";
+      position: absolute; 
+      left: 0; 
+      right: 0; 
+      height: 16%; 
+      top: 58%;
+      background: repeating-linear-gradient(
+        -10deg, rgba(255,255,255,.16) 0 6px, rgba(255,255,255,0) 6px 12px
+      );
+      mix-blend-mode: soft-light; 
+      opacity: .9;
+    }
+
+    /* Apariencia dorada (solo estética) */
+    .egg.gold-look .shell {
+      --base: #f7e49c; --shade: #caa21f;
+      background: linear-gradient(180deg, #fff3b0 0%, #f7d774 30%, #e1b941 65%, #b78a1e 100%);
+      box-shadow:
+        inset 0 -10px 20px rgba(0,0,0,.18),
+        inset 0 8px 14px rgba(255,255,255,.45),
+        0 0 8px rgba(255,215,0,.45);
+    }
+    .egg.gold-look .shell::before {
+      content: "";
+      position: absolute; 
+      left: 20%; 
+      top: 10%;
+      width: 30%; 
+      height: 40%; 
+      border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(255,255,255,.9), rgba(255,255,255,0));
+      filter: blur(1px); 
+      transform: rotate(-15deg);
+    }
+
+    @keyframes fall { to { transform: translateY(115vh) rotate(360deg); } }
+
+    /* ====== Confeti ====== */
+    .confetti {
+      position: absolute;
+      width: var(--w, 8px); 
+      height: var(--h, 10px);
+      background: var(--c, #ff3b3b);
+      top: var(--y, 0px); 
+      left: var(--x, 0px);
+      opacity: 1; 
+      transform-origin: center; 
+      border-radius: 2px;
+      animation: confettiBurst var(--t, 900ms) ease-out forwards;
+      will-change: transform, opacity; 
+      pointer-events: none;
+    }
+    .confetti.round { border-radius: 50%; }
+    .confetti.tri {
+      width: 0; 
+      height: 0; 
+      background: none;
+      border-left: calc(var(--w, 8px) / 2) solid transparent;
+      border-right: calc(var(--w, 8px) / 2) solid transparent;
+      border-bottom: var(--h, 10px) solid var(--c, #ff3b3b);
+    }
+    @keyframes confettiBurst {
+      0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--dx, 40px), var(--dy, -100px)) rotate(720deg); opacity: 0; }
+    }
+
+    /* Huevito dorado pequeño al ganar */
+    .gold-pop {
+      position: absolute; 
+      width: 26px; 
+      height: 34px;
+      left: var(--x, 0px); 
+      top: var(--y, 0px);
+      transform: translate(-50%, -50%); 
+      pointer-events: none;
+      animation: pop 900ms ease-out forwards; 
+      z-index: 1001;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
+    }
+    .gold-pop::before {
+      content: "";
+      position: absolute; 
+      inset: 0;
+      border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+      background: linear-gradient(180deg, #fff3b0 0%, #f7d774 30%, #e1b941 65%, #b78a1e 100%);
+    }
+    @keyframes pop {
+      0% { transform: translate(-50%, -50%) scale(.6); opacity: 0; }
+      55% { transform: translate(-50%, -90%) scale(1.05); opacity: 1; }
+      100% { transform: translate(-50%, -130%) scale(.98); opacity: 0; }
+    }
+
+    /* Etiqueta Premio */
+    .badge {
+      position: absolute; 
+      left: var(--x, 0px); 
+      top: var(--y, 0px);
+      transform: translate(-50%, -120%);
+      background: #2ecc71; 
+      color: white; 
+      padding: 4px 8px;
+      border-radius: 999px; 
+      font-size: 12px; 
+      font-weight: 800; 
+      letter-spacing: .3px;
+      white-space: nowrap; 
+      box-shadow: 0 4px 10px rgba(46, 204, 113, .35);
+      pointer-events: none; 
+      animation: badgePop 950ms ease-out forwards;
+    }
+    @keyframes badgePop {
+      0% { transform: translate(-50%, -120%) scale(.6); opacity: 0; }
+      50% { transform: translate(-50%, -140%) scale(1.05); opacity: 1; }
+      100% { transform: translate(-50%, -170%) scale(1); opacity: 0; }
+    }
+
+    /* Banner de victoria (no bloqueante) */
+    #winBanner {
+      position: fixed; 
+      left: 50%; 
+      top: 3%;
+      transform: translateX(-50%);
+      z-index: 1060;
+      background: #16a34a; 
+      color: #fff; 
+      font-weight: 900;
+      padding: 10px 14px; 
+      border-radius: 12px; 
+      box-shadow: 0 10px 24px rgba(0,0,0,.2);
+      display: none;
+      letter-spacing: .3px;
+    }
+</style>
+</head>
+<body>
+  <button id="toggleBtn">Huevos de Pascua</button>
+
+  <!-- Panel cuenta regresiva (izquierda) -->
+  <div id="countdownPanel" class="panel" aria-live="polite">
+    <div class="countdown">
+      <div class="bubble" id="cdNumber">10</div>
+      <div>
+        <div class="cd-text">Comenzando en…</div>
+        <div class="cd-sub">¡Prepárate para cazar huevitos!</div>
+      </div>
+    </div>
+    <div id="progressBadge"><span id="progressDot"></span> Huevitos con premio: <span id="progressText">0/3</span></div>
+  </div>
+
+  <!-- Panel info (derecha) -->
+  <div id="infoPanel" class="panel">
+    <h4 class="info-title">🐰 ¡Feliz Pascua!</h4>
+    <p class="info-body">
+      Haz clic en los huevos que caen para explotarlos. Algunos esconden sorpresa…
+      ¡junta <strong>5 huevitos con premio</strong> para desbloquear el regalo! 🎁
+    </p>
+    <p class="info-hint">Tip: no todos los dorados ganan… ¡la suerte está oculta! 😉</p>
+  </div>
+
+  <!-- Banner victoria -->
+  <div id="winBanner">🏆 ¡Premio desbloqueado! ¡Has encontrado 3 huevitos!</div>
+
+  <!-- Capa de animación -->
+  <div id="stage" aria-hidden="true"></div>
+<script>
+    // ========= Configuración =========
+    const CONFIG = {
+      spawnEveryMs: 820,        // Frecuencia de aparición
+      prizeProbability: 0.08,   // Probabilidad de premio (independiente del color)
+      goldAppearanceChance: 0.22, // % de huevos que se ven dorados (estético)
+      minSize: 42,
+      maxSize: 70,
+      minFallSec: 7,
+      maxFallSec: 12,
+      maxConcurrent: 60,
+      burstPieces: 24,
+      countdownSeconds: 10,     // Cuenta regresiva al iniciar
+      goal: 5                   // Huevitos con premio necesarios para "ganar"
+    };
+
+    // ========= Elementos =========
+    const stage = document.getElementById('stage');
+    const btn   = document.getElementById('toggleBtn');
+
+    const countdownPanel = document.getElementById('countdownPanel');
+    const cdNumber       = document.getElementById('cdNumber');
+    const infoPanel      = document.getElementById('infoPanel');
+
+    const progressText   = document.getElementById('progressText');
+    const winBanner      = document.getElementById('winBanner');
+
+    // ========= Estado =========
+    let isRunning = false;         // Modo juego (incluye cuenta regresiva)
+    let isCounting = false;        // Cuenta regresiva activa
+    let spawnTimer = null;         // Intervalo de huevos
+    let countdownTimer = null;     // Intervalo de cuenta regresiva
+    let prizesFound = 0;           // Huevitos con premio encontrados
+
+    // Paletas y utilidades
+    const palettes = [
+      ['#ffdce0', '#ff9fb0'], // rosa
+      ['#e6f7ff', '#9bd7ff'], // celeste
+      ['#e8ffe6', '#9ff7a1'], // verde
+      ['#fff4cc', '#ffd166'], // amarillo
+      ['#f0e6ff', '#c7a6ff'], // lila
+      ['#ffe9d6', '#ffb784']  // durazno
+    ];
+    const confettiColors = ['#FF3B3B','#FFB703','#34D399','#3B82F6','#A855F7','#F472B6','#2DD4BF'];
+
+    const rand = (min, max) => Math.random() * (max - min) + min;
+    const randInt = (min, max) => Math.floor(rand(min, max));
+
+    function randomPastelPair() { return palettes[randInt(0, palettes.length)]; }
+    function randomConfettiColor() { return confettiColors[randInt(0, confettiColors.length)]; }
+
+    // ========= UI helpers =========
+    function showPanels() {
+      countdownPanel.style.display = 'block';
+      infoPanel.style.display = 'block';
+    }
+    function hidePanels() {
+      countdownPanel.style.display = 'none';
+      infoPanel.style.display = 'none';
+    }
+    function resetProgress() {
+      prizesFound = 0;
+      progressText.textContent = `${prizesFound}/${CONFIG.goal}`;
+    }
+
+    function startCountdown() {
+      isCounting = true;
+      let remaining = CONFIG.countdownSeconds;
+      cdNumber.textContent = remaining;
+      btn.textContent = 'Cancelar';
+
+      showPanels();
+      resetProgress();
+
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        remaining--;
+        cdNumber.textContent = remaining;
+        if (remaining <= 0) {
+          clearInterval(countdownTimer);
+          isCounting = false;
+          startSpawning();
+          btn.textContent = 'Detener huevos';
+          // Ocultar solo el contador (deja el panel info)
+          // countdownPanel.style.display = 'none';
+        }
+      }, 1000);
+    }
+
+    function startSpawning() {
+      // Seguridad: evitar múltiples intervalos
+      if (spawnTimer) clearInterval(spawnTimer);
+      spawnTimer = setInterval(createEgg, CONFIG.spawnEveryMs);
+    }
+
+    function stopAll() {
+      isRunning = false;
+      isCounting = false;
+      btn.textContent = 'Huevos de Pascua';
+
+      // Timers
+      clearInterval(spawnTimer);   spawnTimer = null;
+      clearInterval(countdownTimer); countdownTimer = null;
+
+      // UI
+      hidePanels();
+      winBanner.style.display = 'none';
+
+      // Limpiar escenario
+      stage.querySelectorAll('.egg, .confetti, .gold-pop, .badge').forEach(n => n.remove());
+    }
+
+    // ========= Lógica de huevos =========
+    function createEgg() {
+      if (stage.querySelectorAll('.egg').length >= CONFIG.maxConcurrent) return;
+
+      const egg = document.createElement('div');
+      egg.className = 'egg';
+
+      const w = randInt(CONFIG.minSize, CONFIG.maxSize);
+      const h = Math.round(w * 1.3);
+      egg.style.width  = w + 'px';
+      egg.style.height = h + 'px';
+
+      const maxLeft = Math.max(0, window.innerWidth - w);
+      const x = rand(0, maxLeft);
+      egg.style.left = x + 'px';
+
+      const dur = rand(CONFIG.minFallSec, CONFIG.maxFallSec).toFixed(2) + 's';
+      const delay = rand(0, 2).toFixed(2) + 's';
+      egg.style.setProperty('--dur', dur);
+      egg.style.setProperty('--delay', delay);
+
+      // Premio y apariencia dorada son independientes
+      const hasPrize = Math.random() < CONFIG.prizeProbability;
+      const looksGold = Math.random() < CONFIG.goldAppearanceChance;
+
+      egg.dataset.prize = hasPrize ? '1' : '0';
+      if (looksGold) {
+        egg.classList.add('gold-look');
+      } else {
+        const [base, shade] = randomPastelPair();
+        egg.style.setProperty('--base', base);
+        egg.style.setProperty('--shade', shade);
+      }
+
+      const shell = document.createElement('div');
+      shell.className = 'shell';
+      egg.appendChild(shell);
+
+      egg.dataset.busted = '0';
+      egg.addEventListener('click', (ev) => {
+        if (egg.dataset.busted === '1') return;
+        egg.dataset.busted = '1';
+        explodeEgg(egg, ev);
+      });
+
+      egg.addEventListener('animationend', () => egg.remove());
+      stage.appendChild(egg);
+    }
+
+    function explodeEgg(egg, ev) {
+      const rect = egg.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top  + rect.height / 2;
+
+      spawnConfettiBurst(cx, cy, CONFIG.burstPieces);
+
+      if (egg.dataset.prize === '1') {
+        spawnGoldPop(cx, cy);
+        spawnBadge(cx, cy, '¡Premio!');
+        prizesFound++;
+        progressText.textContent = `${prizesFound}/${CONFIG.goal}`;
+
+        if (prizesFound >= CONFIG.goal) {
+          celebrateWin();
+        }
+      }
+
+      egg.remove();
+    }
+
+    function spawnConfettiBurst(cx, cy, pieces) {
+      for (let i = 0; i < pieces; i++) {
+        const c = document.createElement('div');
+        const form = randInt(0, 3);
+        if (form === 1) c.className = 'confetti round';
+        else if (form === 2) c.className = 'confetti tri';
+        else c.className = 'confetti';
+
+        c.style.setProperty('--x', cx + 'px');
+        c.style.setProperty('--y', cy + 'px');
+        c.style.setProperty('--c', randomConfettiColor());
+        c.style.setProperty('--w', randInt(6, 10) + 'px');
+        c.style.setProperty('--h', randInt(8, 14) + 'px');
+        c.style.setProperty('--t', randInt(750, 1100) + 'ms');
+
+        const dx = rand(-140, 140);
+        const dy = rand(-170, -30);
+        c.style.setProperty('--dx', dx + 'px');
+        c.style.setProperty('--dy', dy + 'px');
+
+        stage.appendChild(c);
+        c.addEventListener('animationend', () => c.remove());
+      }
+    }
+
+    function spawnGoldPop(cx, cy) {
+      const g = document.createElement('div');
+      g.className = 'gold-pop';
+      g.style.setProperty('--x', cx + 'px');
+      g.style.setProperty('--y', cy + 'px');
+      stage.appendChild(g);
+      g.addEventListener('animationend', () => g.remove());
+    }
+
+    function spawnBadge(cx, cy, text) {
+      const b = document.createElement('div');
+      b.className = 'badge';
+      b.textContent = text;
+      b.style.setProperty('--x', cx + 'px');
+      b.style.setProperty('--y', cy + 'px');
+      stage.appendChild(b);
+      b.addEventListener('animationend', () => b.remove());
+    }
+
+    // Celebración por alcanzar la meta
+    function celebrateWin() {
+      // Banner
+      winBanner.style.display = 'block';
+      setTimeout(() => { winBanner.style.display = 'none'; }, 4200);
+
+      // Lluvia de confetis rápida (5 ráfagas)
+      const w = window.innerWidth, h = window.innerHeight;
+      for (let i = 0; i < 5; i++) {
+        const cx = rand(0.2*w, 0.8*w);
+        const cy = rand(0.2*h, 0.6*h);
+        spawnConfettiBurst(cx, cy, CONFIG.burstPieces + 12);
+      }
+
+      // Hook para premio real (abre modal, redirige, etc.)
+      // onGrandPrizeUnlocked?.();
+    }
+
+    // ========= Interacciones =========
+    btn.addEventListener('click', () => {
+      if (!isRunning) {
+        isRunning = true;
+        startCountdown();
+      } else {
+        // Si está corriendo (en cuenta o en caída), detener todo
+        stopAll();
+      }
+    });
+
+    // Ahorro de recursos si la pestaña pierde foco
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && isRunning) stopAll();
+    });
+
+    // Ajuste de posición en resize para futuros huevos
+    window.addEventListener('resize', () => {
+      // No re-posicionamos huevos ya creados para mantener naturalidad.
+    });
+</script>
+</body>
+</html>
