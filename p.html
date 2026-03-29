@@ -24,17 +24,23 @@
       z-index: 1100;
       appearance: none; 
       border: none; 
-      background: #6c5ce7; 
-      color: white;
-      padding: 10px 14px; 
+      background-image: url('https://media3.giphy.com/media/uVcj1ahoszu38bo07b/giphy.gif');
+      background-size: cover;
+      background-position: center;
+      color: black;
+      padding: 13px 16px; 
       border-radius: 10px; 
-      font-weight: 700; 
+      font-weight: 800; 
       cursor: pointer;
       box-shadow: 0 6px 16px rgba(0,0,0,.15);
       transition: transform .08s ease, box-shadow .2s ease, background .2s ease;
     }
-    #toggleBtn:hover { background: #5a4ed2; }
-    #toggleBtn:active { transform: scale(.98); }
+    #toggleBtn:hover { 
+      background-image: url('https://media3.giphy.com/media/X46GrMN49Kv4VjJCSi/giphy.gif');
+}
+    #toggleBtn:active { 
+      transform: scale(.98); 
+    }
 
     /* ====== Escenario (capa transparente a pantalla completa) ====== */
     #stage {
@@ -281,7 +287,13 @@
 </style>
 </head>
 <body>
-  <button id="toggleBtn">Huevos de Pascua</button>
+  <!-- <button id="toggleBtn">Huevos de Pascua</button> -->
+  <button class="button">
+  <span class="label">Huevos de Pascua</span>
+  <span class="gradient-container">
+    <span class="gradient"></span>
+  </span>
+</button>
 
   <!-- Panel cuenta regresiva (izquierda) -->
   <div id="countdownPanel" class="panel" aria-live="polite">
