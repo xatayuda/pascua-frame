@@ -306,7 +306,7 @@
   </div>
 
   <!-- Banner victoria -->
-  <div id="winBanner">🏆 ¡Premio desbloqueado! ¡Has encontrado 3 huevitos!</div>
+  <div id="winBanner">🏆 ¡Premio desbloqueado! ¡Has encontrado 5 huevitos!</div>
 
   <!-- Capa de animación -->
   <div id="stage" aria-hidden="true"></div>
@@ -322,7 +322,7 @@
       maxFallSec: 12,
       maxConcurrent: 60,
       burstPieces: 24,
-      countdownSeconds: 10,     // Cuenta regresiva al iniciar
+      countdownSeconds: 12,     // Cuenta regresiva al iniciar
       goal: 5                   // Huevitos con premio necesarios para "ganar"
     };
 
@@ -540,7 +540,7 @@
     function celebrateWin() {
       // Banner
       winBanner.style.display = 'block';
-      setTimeout(() => { winBanner.style.display = 'none'; }, 4200);
+      setTimeout(() => { winBanner.style.display = 'none'; }, 5000);
 
       // Lluvia de confetis rápida (5 ráfagas)
       const w = window.innerWidth, h = window.innerHeight;
